@@ -1,0 +1,16 @@
+# Core
+torch>=2.0
+torchvision>=0.15
+opencv-python-headless>=4.8
+numpy>=1.24
+pytesseract>=0.3.10
+yt-dlp>=2024.1.1
+Pillow>=10.0
+pandas>=2.0          # pulled in by yolov5's AutoShape
+requests
+psutil
+seaborn              # yolov5 plotting import
+PyYAML
+tqdm
+matplotlib
+scipy

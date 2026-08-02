@@ -1,0 +1,72 @@
+# Hyperparameters for retraining the fencing overlay detector.
+#
+# Diffs against what best.pt was actually trained with (read out of the
+# checkpoint's opt dict), and why:
+#
+#   fliplr: 0.5 -> 0.0    THE IMPORTANT ONE. Your class set is
+#       left/right *semantic*: scoreLeft, scoreRight, overlayLeft,
+#       overlayRight. Horizontal flip mirrors the image but keeps the label,
+#       so half your training batches were teaching the model that a box
+#       labelled scoreLeft can appear on the right-hand side of the frame and
+#       vice versa. On a 100-image dataset that is a large fraction of the
+#       signal actively working against the thing you need the model to learn.
+#       This alone plausibly explains a good share of the left/right confusion.
+#       (YOLOv5 does support flipping paired classes, but only if you pass a
+#       flip index; the default scratch hyps do not, so the safe fix is 0.0.)
+#
+#   mosaic: 1.0 -> 0.6    Mosaic does help here, because it moves overlays
+#       around the frame and that is exactly the "score in different
+#       positions" variation you need. But at 1.0 the model almost never sees
+#       an intact, correctly-composed broadcast frame, which is the only thing
+#       it will ever see at inference. 0.6 keeps the position augmentation and
+#       restores some clean frames.
+#
+#   scale: 0.5 -> 0.35    Overlays are rendered at a near-fixed size relative
+#       to the frame. Heavy scale jitter spends capacity on scales that do not
+#       occur.
+#
+#   translate: 0.1 -> 0.2  Increased on purpose: this is the augmentation that
+#       genuinely targets "the score is in a different position in different
+#       overlay formats".
+#
+#   degrees / shear / perspective stay at 0. Broadcast overlays are axis
+#       aligned. Rotating them is teaching a case that never happens.
+#
+#   hsv_v: 0.4 -> 0.5, hsv_s: 0.7 -> 0.6   Overlay skins differ mostly in
+#       brightness/opacity over varying piste backgrounds; saturation jitter
+#       matters less than value jitter.
+#
+#   copy_paste: 0.0 -> 0.1  Only useful if you have segment masks; harmless
+#       otherwise. Leave at 0.0 if training from boxes only.
+#
+# Also see training/README.md for the non-hyperparameter changes (epochs,
+# model size, val split) that matter at least as much.
+
+lr0: 0.01
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+warmup_epochs: 3.0
+warmup_momentum: 0.8
+warmup_bias_lr: 0.1
+box: 0.05
+cls: 0.03125
+cls_pw: 1.0
+obj: 1.0
+obj_pw: 1.0
+iou_t: 0.20
+anchor_t: 4.0
+fl_gamma: 0.0
+hsv_h: 0.015
+hsv_s: 0.6
+hsv_v: 0.5
+degrees: 0.0
+translate: 0.2
+scale: 0.35
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.0
+mosaic: 0.6
+mixup: 0.0
+copy_paste: 0.0
