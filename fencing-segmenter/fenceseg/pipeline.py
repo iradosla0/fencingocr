@@ -165,7 +165,15 @@ def analyse(video: Path, cfg: Config,
 
             records.append(Record(idx, ts, fencers, sl, sr))
 
-            clock_val = clock_reader.read(frame, bl, br) if clock_reader is not None else None
+            # Clock reading is only ever consulted while waiting for a bout
+            # to start (AdaptiveBoutStateMachine ignores clock_seconds once
+            # a bout is underway). Gating on sm.waiting_for_start here, not
+            # just on clock_reader being present, skips the OCR cost for the
+            # much larger fraction of the video spent mid-bout, where the
+            # value would be computed and then immediately discarded.
+            clock_val = (clock_reader.read(frame, bl, br)
+                        if clock_reader is not None and sm.waiting_for_start
+                        else None)
 
             if use_adaptive_start:
                 sm.step(FrameObs(
