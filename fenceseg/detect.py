@@ -66,10 +66,18 @@ class Detector:
         # v7.0 predates that restructure and matches the checkpoint's module
         # layout exactly. trust_repo=True skips the interactive y/N prompt,
         # which otherwise blocks a non-interactive rerun of this cell.
-        model = torch.hub.load(
-            "ultralytics/yolov5:v7.0", "custom", path=str(weights),
-            verbose=False, trust_repo=True,
-        )
+        _orig_load = torch.load
+        def _load_trusted(*a, **kw):
+            kw.setdefault("weights_only", False)
+            return _orig_load(*a, **kw)
+        torch.load = _load_trusted
+        try:
+            model = torch.hub.load(
+                "ultralytics/yolov5:v7.0", "custom", path=str(weights),
+                verbose=False, trust_repo=True,
+            )
+        finally:
+            torch.load = _orig_load
         model.conf = conf_thres
         model.iou = iou_thres
         model.max_det = 20
