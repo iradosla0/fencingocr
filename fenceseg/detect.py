@@ -57,8 +57,18 @@ class Detector:
         self.imgsz = imgsz
         self.half = bool(half) and self.device.type == "cuda"
 
+        # Pinned to v7.0, not "master". Ultralytics restructured the yolov5
+        # repo to delegate into their newer unified `ultralytics` package;
+        # current master's hubconf.py does `from ultralytics.utils.patches
+        # import torch_load`, which is not installed and is not what a
+        # checkpoint in the classic format (this one - the pickle references
+        # `models.yolo.DetectionModel` / `models.common.Conv` directly) needs.
+        # v7.0 predates that restructure and matches the checkpoint's module
+        # layout exactly. trust_repo=True skips the interactive y/N prompt,
+        # which otherwise blocks a non-interactive rerun of this cell.
         model = torch.hub.load(
-            "ultralytics/yolov5", "custom", path=str(weights), verbose=False
+            "ultralytics/yolov5:v7.0", "custom", path=str(weights),
+            verbose=False, trust_repo=True,
         )
         model.conf = conf_thres
         model.iou = iou_thres

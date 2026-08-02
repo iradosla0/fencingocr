@@ -1,0 +1,6 @@
+work/
+bouts/
+dataset/
+*.pt
+*.mp4
+__pycache__/
